@@ -3,13 +3,12 @@
 *.h5seurat
 *.rds
 *.mtx
-*.rda
 *.tsv
 *.csv
 
 # Generated outputs
 /export/
-/output_files/
+output_files/**/*.rds
 
 # Claude Code local config
 .claude/settings.local.json
