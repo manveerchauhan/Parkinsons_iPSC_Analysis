@@ -14,7 +14,7 @@
 #   - Mature glutamatergic neurons
 #
 # Input  : output_files/integrated_objects/iPSC_PD_integrated_harmony_annotated.rds
-# Output : output_files/DEG/padj_histograms.pdf
+# Output : output_files/DEG/pseudobulk_DEG_report.pdf
 # ==============================================================================
 
 library(Seurat)
@@ -132,28 +132,12 @@ padj_plots <- lapply(names(deg_results), function(ct) {
 })
 padj_plots <- Filter(Negate(is.null), padj_plots)
 
-pdf("output_files/DEG/padj_histograms.pdf", width = 14, height = 5)
-print(wrap_plots(padj_plots, nrow = 1) +
-        plot_annotation(title    = "iPSC PD — Pseudobulk DEG: Adjusted P-value Distributions",
-                        subtitle = "Idiopathic PD vs Control | dashed line = padj 0.05",
-                        theme    = theme(plot.title    = element_text(size = 14, face = "bold"),
-                                         plot.subtitle = element_text(size = 10, colour = "grey40"))))
-dev.off()
-cat("Saved: output_files/DEG/padj_histograms.pdf\n")
-
-# ==============================================================================
-# DIAGNOSTICS — raw p-value distributions + dispersion plots
-# ==============================================================================
-
 dds_list <- list(
   "Astrocytes"                    = out.Astrocytes$dds,
   "Midbrain dopaminergic neurons" = out.DA_neurons$dds,
   "Mature glutamatergic neurons"  = out.Gluta_neurons$dds
 )
 
-pdf("output_files/DEG/DESeq2_diagnostics.pdf", width = 14, height = 5)
-
-# Page 1: raw p-value histograms
 pval_plots <- lapply(names(deg_results), function(ct) {
   df <- deg_results[[ct]]
   if (is.null(df)) return(NULL)
@@ -171,13 +155,28 @@ pval_plots <- lapply(names(deg_results), function(ct) {
           plot.subtitle = element_text(size = 9, colour = "grey40"))
 })
 pval_plots <- Filter(Negate(is.null), pval_plots)
+
+# ==============================================================================
+# REPORT — single PDF
+# ==============================================================================
+# Page 1 : adjusted p-value histograms
+# Page 2 : raw p-value histograms
+# Pages 3+: dispersion estimates (one per cell type)
+
+pdf("output_files/DEG/pseudobulk_DEG_report.pdf", width = 14, height = 5)
+
+print(wrap_plots(padj_plots, nrow = 1) +
+        plot_annotation(title    = "iPSC PD — Pseudobulk DEG: Adjusted P-value Distributions",
+                        subtitle = "Idiopathic PD vs Control | dashed line = padj 0.05",
+                        theme    = theme(plot.title    = element_text(size = 14, face = "bold"),
+                                         plot.subtitle = element_text(size = 10, colour = "grey40"))))
+
 print(wrap_plots(pval_plots, nrow = 1) +
         plot_annotation(title    = "iPSC PD — Raw P-value Distributions",
                         subtitle = "Enrichment near 0 indicates real signal; flat = null",
                         theme    = theme(plot.title    = element_text(size = 14, face = "bold"),
                                          plot.subtitle = element_text(size = 10, colour = "grey40"))))
 
-# Pages 2–4: dispersion plots (one per cell type)
 for (ct in names(dds_list)) {
   dds <- dds_list[[ct]]
   if (is.null(dds)) next
@@ -185,4 +184,4 @@ for (ct in names(dds_list)) {
 }
 
 dev.off()
-cat("Saved: output_files/DEG/DESeq2_diagnostics.pdf\n")
+cat("Saved: output_files/DEG/pseudobulk_DEG_report.pdf\n")
